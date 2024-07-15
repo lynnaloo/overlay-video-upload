@@ -5,7 +5,7 @@ import os
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.route(route="overlayvideo")
+@app.route(route="overlayvideo", methods=["POST"])
 def overlayvideo(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     # log out the request body 
@@ -20,9 +20,17 @@ def overlayvideo(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     blob_url = req_body.get('blob_url')
+    content_tags = req_body.get('content_tags')
+
     if not blob_url:
         return func.HttpResponse(
             "Please provide a blob_url in the request body.",
+            status_code=400
+        )
+    
+    if not content_tags:
+        return func.HttpResponse(
+            "Please provide content_tags in the request body.",
             status_code=400
         )
 
@@ -42,6 +50,7 @@ def overlayvideo(req: func.HttpRequest) -> func.HttpResponse:
 
         # Process the video content 
         # For example, overlay a watermark on the video
+        # tags of objects in the video will be in content_tags
 
         # Upload the video to a different blob storage folder
         destination_blob_url = os.getenv('DESTINATION_BLOB_URL')

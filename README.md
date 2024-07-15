@@ -18,3 +18,12 @@ Downloads a video from Azure Blob Storage, processes and adds a watermark, uploa
   }
 }
 ```
+
+## POST HTTP Request to the Function URL with this format:
+
+```
+  {
+    "blob_url": "",
+    "content_tags": "example1, example2"
+  }
+```
