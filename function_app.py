@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 import azure.functions as func
 import logging
 from azure.storage.blob import BlobServiceClient
@@ -8,9 +9,7 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 @app.route(route="overlayvideo", methods=["POST"])
 def overlayvideo(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-    # log out the request body 
-    logging.info(req.get_body())
-
+  
     try:
         req_body = req.get_json()
     except ValueError:
@@ -54,8 +53,23 @@ def overlayvideo(req: func.HttpRequest) -> func.HttpResponse:
 
         # Upload the video to a different blob storage folder
         destination_blob_url = os.getenv('DESTINATION_BLOB_URL')
-        destination_blob_client = blob_service_client.get_blob_client(destination_blob_url)
+        if not destination_blob_url:
+            return func.HttpResponse(
+                "Please provide a DESTINATION_BLOB_URL in the environment variables.",
+                status_code=500
+            )
         
+        # Create a blob client using the destination blob URL
+        #destination_blob_client = blob_service_client.get_blob_client(destination_blob_url)
+
+        parsed_dest_url = urlparse(destination_blob_url)
+        dest_path_parts = parsed_dest_url.path.lstrip('/').split('/')
+        dest_container_name = dest_path_parts[0]
+        dest_blob_name = '/'.join(dest_path_parts[1:])
+        
+        # Create a blob client using the destination container and blob name
+        destination_blob_client = blob_service_client.get_blob_client(container=dest_container_name, blob=dest_blob_name)
+
         with open(local_file_path, "rb") as data:
             destination_blob_client.upload_blob(data, overwrite=True)
 
